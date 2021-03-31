@@ -26,8 +26,9 @@ func New() Server {
 	r := mux.NewRouter()
 
 	r.HandleFunc("/pokemon", getinfo.FetchAll).Methods(http.MethodGet)
-	r.HandleFunc("/pokemon/{ID:[A-Za-z0-9]+}", getinfo.FetchPokemon).Methods(http.MethodGet)
-
+	r.HandleFunc("/pokemon/{ID:[\\d]+}", getinfo.FetchPokemon).Methods(http.MethodGet)
+	r.HandleFunc("/pokemon/update/{POKEDEX:[A-Za-z0-9]+}", getinfo.UpdateCsv).Methods(http.MethodGet)
+	r.HandleFunc("/pokemon/{TP:[(?:^|\\W)(even)(?:$|\\W)||(?:^|\\W)(odd)(?:$|\\W)]+}/{ITEMS:[\\d]+}/{ITEMS-PER-WORKER:[\\d]+}",getinfo.ObtaingPokemonConcurrent).Methods(http.MethodGet)
 	a.router = r
 	return a
 }
