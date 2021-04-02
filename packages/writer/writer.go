@@ -20,7 +20,6 @@ func WriteData(data [][]string, fileName string) error {
 	}
 
 	csvwriter.Flush()
-	f.Close()
 
 	return nil
 }

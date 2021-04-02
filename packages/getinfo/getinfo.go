@@ -126,9 +126,7 @@ func processInfoJobs(job int, workers int, Items int, items_per_worker int, inde
 	if job+1 == workers{ 
 		nwIndex:= Items%items_per_worker
 		if index == nwIndex && nwIndex>0{
-			index = items_per_worker
-
-			return index,result
+			return items_per_worker,result
 		}	
 		nextId := (job+job) * items_per_worker
 		if id > nextId{
@@ -214,7 +212,7 @@ func updateCsvPokedex(pokedex interface{}) error {
 	newCsvData := make([][]string,0)
 
 	newCsvData = append(newCsvData,[]string{"ID","Name"})
-	for i, _ := range responseObject.Pokemon {
+	for i := range responseObject.Pokemon {
 		newCsvData = append(newCsvData,[]string{strconv.Itoa(responseObject.Pokemon[i].EntryNo), responseObject.Pokemon[i].Species.Name})
 	}
 	fail := writer.WriteData(newCsvData,"./pokemons.csv")
@@ -312,11 +310,13 @@ func ObtaingPokemonConcurrent(w http.ResponseWriter, r *http.Request) {
 	for i:= 0; i<workers ;i++ {
 		select {
 		case results:= <-results:
-			pokemons := append(pokemons,results)
-			json.NewEncoder(w).Encode(pokemons)
+			if results != nil{
+				pokemons := append(pokemons,results)
+				json.NewEncoder(w).Encode(pokemons)
+			}	
 		case erro := <-err:
 			json.NewEncoder(w).Encode(erro)
-			break
+			continue
 		}
 	}
 }
@@ -324,8 +324,10 @@ func ObtaingPokemonConcurrent(w http.ResponseWriter, r *http.Request) {
 func Worker(jobs <- chan int, result chan<- []pokemon.CsvPokemon,erro chan<- error, typeS string, items int, items_per_worker int, workers int){
 	for i:= range jobs {
 		response,err := getPokemonsByArg(typeS,items, items_per_worker,i, workers)
+		fmt.Println(err!=nil)
 		if err != nil {
 			erro <- err 
+			close(result)
 			break
 		}
 		result <- response
