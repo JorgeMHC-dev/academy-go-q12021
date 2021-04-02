@@ -5,6 +5,7 @@ import (
 	"os"
 )
 
+//WriteData - writes data to the csv file
 func WriteData(data [][]string, fileName string) error {
 	f,err := os.Create(fileName)
 

@@ -1,6 +1,6 @@
 package pokemon
 
-//Defines the properties of a Pokemon to be listed
+// CsvPokemon - Defines the properties of a Pokemon to be listed
 type CsvPokemon struct {
 	ID    int `json:"ID,omitempty"`
 	Name  string `json:"Name,omitempty"`

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -158,6 +157,7 @@ func processInfoJobs(job int, workers int, Items int, items_per_worker int, inde
 	return index,result
 }
 
+//FetchAll - Obtains all the pokemons in the list
 func FetchAll(w http.ResponseWriter, r *http.Request) {
 	pokemons,err := getPokemons()
 
@@ -168,6 +168,8 @@ func FetchAll(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(pokemons)
 	}
 }
+
+//FetchPokemon - Obtains one pokemon based on the ID
 func FetchPokemon(w http.ResponseWriter, r *http.Request) {
 	vars:= mux.Vars(r)
 
@@ -191,7 +193,7 @@ func updateCsvPokedex(pokedex interface{}) error {
 		Dex = Dex+v
 	case int:
 		Dex = Dex+strconv.Itoa(v)
-}
+	}
 	response, err := http.Get(Dex)
     if err != nil {
         return err
@@ -224,6 +226,7 @@ func updateCsvPokedex(pokedex interface{}) error {
     return nil
 }
 
+//UpdateCsv - updates the csv with a pokedex obtained from the pokeapi endpoint
 func UpdateCsv(w http.ResponseWriter, r *http.Request){
 	vars:= mux.Vars(r)
 
@@ -253,29 +256,8 @@ func splitFloat(n string) int {
 	return n1+n2
 }
 
-func floorCeilFloat(n string) int {
-	s := strings.Split(n,".")
-	y := s[1]
 
-	n2,_:= strconv.Atoi(y)
-
-	var nw float64
-
-	if n2<=5 && n2>0{
-		nw,_ = strconv.ParseFloat(n,64)
-
-		nw = math.Floor(nw)
-	} else if n2 > 5 {
-		nw,_ = strconv.ParseFloat(n,64)
-
-		nw = math.Ceil(nw)
-	} else {
-		nw,_ = strconv.ParseFloat(n,64)
-	}
-
-	return int(nw)
-}
-
+// ObtaingPokemonConcurrent - Get the vars of the URL and runs our go routine and obtains all the results sending them in the response header
 func ObtaingPokemonConcurrent(w http.ResponseWriter, r *http.Request) {
 	vars:= mux.Vars(r)
 
@@ -321,10 +303,11 @@ func ObtaingPokemonConcurrent(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+
+// Worker - Initialize all the workers running on our go routine
 func Worker(jobs <- chan int, result chan<- []pokemon.CsvPokemon,erro chan<- error, typeS string, items int, items_per_worker int, workers int){
 	for i:= range jobs {
 		response,err := getPokemonsByArg(typeS,items, items_per_worker,i, workers)
-		fmt.Println(err!=nil)
 		if err != nil {
 			erro <- err 
 			close(result)
