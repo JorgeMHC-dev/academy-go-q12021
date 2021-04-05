@@ -5,7 +5,7 @@ import (
 	"os"
 )
 
-//ReadData - reads all the data of a csv file
+//ReadData - reads all the data of a file
 func ReadData(fileName string) ([][]string, error) {
 	f,err := os.Open(fileName)
 

@@ -3,15 +3,14 @@ package getinfo
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
 	pokemon "github.com/jorgemhc-dev/academy-go-q12021/packages/entity"
+	"github.com/jorgemhc-dev/academy-go-q12021/packages/external"
 	"github.com/jorgemhc-dev/academy-go-q12021/packages/reader"
-	"github.com/jorgemhc-dev/academy-go-q12021/packages/writer"
 )
 
 func getPokemons() ([]pokemon.CsvPokemon, error) {
@@ -38,7 +37,7 @@ func getPokemons() ([]pokemon.CsvPokemon, error) {
 	return result,nil
 }
 
-func getPokemon(ID int) (pokemon.CsvPokemon,error) {
+func getPokemon(ID string) (pokemon.CsvPokemon,error) {
 	records,err := reader.ReadData("./pokemons.csv")
 
 	var result pokemon.CsvPokemon
@@ -46,13 +45,14 @@ func getPokemon(ID int) (pokemon.CsvPokemon,error) {
 	if err != nil {
 		return pokemon.CsvPokemon{},err
 	}
-
 	for _, record := range records {
 
-		id,_ :=  strconv.Atoi(record[0])
-		if id == ID {
+		id :=  record[0]
+		name := record[1]
+		if id == ID || name == ID {
+			idI,_ := strconv.Atoi(id)
 			result = pokemon.CsvPokemon{
-				ID : id,
+				ID : idI,
 				Name: record[1],
 			}
 		}
@@ -163,81 +163,43 @@ func FetchAll(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(err)
 	} else {
+		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(pokemons)
 	}
 }
 
-//FetchPokemon - Obtains one pokemon based on the ID
+//FetchPokemon - Obtains one pokemon based on the ID or Name
 func FetchPokemon(w http.ResponseWriter, r *http.Request) {
 	vars:= mux.Vars(r)
 
-	id,_ := strconv.Atoi(vars["ID"])
+	id,_ := vars["ID"]
 	pokemon,err := getPokemon(id)
-
+	
 	w.Header().Set("Content-Type", "application/json")
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		json.NewEncoder(w).Encode("Pokemon Not found")
 		return
 	}
-
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(pokemon)
-}
-
-func updateCsvPokedex(pokedex interface{}) error {
-	Dex := "http://pokeapi.co/api/v2/pokedex/"
-	switch v := pokedex.(type) {
-	case string:
-		Dex = Dex+v
-	case int:
-		Dex = Dex+strconv.Itoa(v)
-	}
-	response, err := http.Get(Dex)
-    if err != nil {
-        return err
-    } else if response.StatusCode == http.StatusNotFound{
-		return fmt.Errorf("Pokedex not found")
-	} else if response.StatusCode != http.StatusOK{
-		return fmt.Errorf("Error in api")
-	}
-
-    responseData, err := ioutil.ReadAll(response.Body)
-    if err != nil {
-        return err
-    }
-	var responseObject pokemon.Response
-	
-	json.Unmarshal(responseData, &responseObject)
-
-	newCsvData := make([][]string,0)
-
-	newCsvData = append(newCsvData,[]string{"ID","Name"})
-	for i := range responseObject.Pokemon {
-		newCsvData = append(newCsvData,[]string{strconv.Itoa(responseObject.Pokemon[i].EntryNo), responseObject.Pokemon[i].Species.Name})
-	}
-	fail := writer.WriteData(newCsvData,"./pokemons.csv")
-
-	if fail != nil {
-		return fail
-	}
-
-    return nil
 }
 
 //UpdateCsv - updates the csv with a pokedex obtained from the pokeapi endpoint
 func UpdateCsv(w http.ResponseWriter, r *http.Request){
 	vars:= mux.Vars(r)
 
-	err := updateCsvPokedex(vars["POKEDEX"])
+	err := external.UpdateCsvPokedex(vars["POKEDEX"])
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(err.Error())
 		return
 	}
-
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(http.StatusOK);
 }
 
@@ -294,9 +256,11 @@ func ObtaingPokemonConcurrent(w http.ResponseWriter, r *http.Request) {
 		case results:= <-results:
 			if results != nil{
 				pokemons := append(pokemons,results)
+				w.WriteHeader(http.StatusOK)
 				json.NewEncoder(w).Encode(pokemons)
 			}	
 		case erro := <-err:
+			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(erro)
 			continue
 		}
