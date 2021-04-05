@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/jorgemhc-dev/academy-go-q12021/packages/getinfo"
+	"github.com/jorgemhc-dev/academy-go-q12021/packages/getinfo"=
 )
 
 type api struct {
