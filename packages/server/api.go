@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/jorgemhc-dev/academy-go-q12021/packages/getinfo"=
 )
 
 type api struct {
@@ -14,21 +15,21 @@ type Server interface {
 	Router() http.Handler
 }
 
-func New() Server {
-	a := &api{}
-
-	r := mux.NewRouter()
-
-	r.HandleFunc("/pokemons", a.fetchAll).Methods(http.MethodGet)
-	r.HandleFunc("/pokemon/{ID:[0-9]+}", a.fetchPokemon).Methods(http.MethodGet)
-
-	a.router = r
-	return a
-}
 
 func (a *api) Router() http.Handler {
 	return a.router
 }
 
-func (a *api) fetchAll(w http.ResponseWriter, r *http.Request) {}
-func (a *api) fetchPokemon(w http.ResponseWriter, r *http.Request) {}
+//New - Creates a new server with its handlers
+func New() Server {
+	a := &api{}
+
+	r := mux.NewRouter()
+
+	r.HandleFunc("/pokemon", getinfo.FetchAll).Methods(http.MethodGet)
+	r.HandleFunc("/pokemon/{ID:[A-Za-z0-9]+}", getinfo.FetchPokemon).Methods(http.MethodGet)
+	r.HandleFunc("/pokemon/update/{POKEDEX:[A-Za-z0-9]+}", getinfo.UpdateCsv).Methods(http.MethodGet)
+	r.HandleFunc("/pokemon/{TP:[(?:^|\\W)(even)(?:$|\\W)||(?:^|\\W)(odd)(?:$|\\W)]+}/{ITEMS:[\\d]+}/{ITEMS-PER-WORKER:[\\d]+}",getinfo.ObtaingPokemonConcurrent).Methods(http.MethodGet)
+	a.router = r
+	return a
+}
