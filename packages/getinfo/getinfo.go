@@ -11,7 +11,18 @@ import (
 	pokemon "github.com/jorgemhc-dev/academy-go-q12021/packages/entity"
 	"github.com/jorgemhc-dev/academy-go-q12021/packages/external"
 	"github.com/jorgemhc-dev/academy-go-q12021/packages/reader"
+	"github.com/thedevsaddam/renderer"
 )
+
+var rnd *renderer.Render
+
+func init() {
+	opts := renderer.Options{
+		ParseGlobPattern: "./templates/*.html",
+	}
+
+	rnd = renderer.New(opts)
+}
 
 func getPokemons() ([]pokemon.CsvPokemon, error) {
 	records,err := reader.ReadData("./pokemons.csv")
@@ -188,6 +199,21 @@ func FetchPokemon(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(pokemon)
 }
 
+//FetchPokemonInfo - obtains the pokemon info from the api
+func FetchPokemonInfo(w http.ResponseWriter, r *http.Request){
+	vars:= mux.Vars(r)
+
+	poke,err := external.FetchInfo(vars["ID"])
+
+	w.Header().Set("Content-Type", "application/json")
+	if err != nil {
+		rnd.HTML(w, http.StatusNotFound, "notFound", nil)
+		return
+	}
+	rnd.HTML(w, http.StatusOK, "body", poke)
+
+}
+
 //UpdateCsv - updates the csv with a pokedex obtained from the pokeapi endpoint
 func UpdateCsv(w http.ResponseWriter, r *http.Request){
 	vars:= mux.Vars(r)
@@ -217,7 +243,6 @@ func splitFloat(n string) int {
 
 	return n1+n2
 }
-
 
 // ObtaingPokemonConcurrent - Get the vars of the URL and runs our go routine and obtains all the results sending them in the response header
 func ObtaingPokemonConcurrent(w http.ResponseWriter, r *http.Request) {

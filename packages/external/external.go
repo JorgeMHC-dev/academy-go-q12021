@@ -50,3 +50,33 @@ func UpdateCsvPokedex(pokedex interface{}) error {
 
     return nil
 }
+
+func FetchInfo(ID interface{}) (pokemon.PokemonResponse,error) {
+
+	Poke := "http://pokeapi.co/api/v2/pokemon/"
+	switch v := ID.(type) {
+	case string:
+		Poke = Poke+v
+	case int:
+		Poke = Poke+strconv.Itoa(v)
+	}
+	response, err := http.Get(Poke)
+    if err != nil {
+        return pokemon.PokemonResponse{},err
+    } else if response.StatusCode == http.StatusNotFound{
+		return pokemon.PokemonResponse{},fmt.Errorf("Pokedex not found")
+	} else if response.StatusCode != http.StatusOK{
+		return pokemon.PokemonResponse{},fmt.Errorf("Error in api")
+	}
+
+    responseData, err := ioutil.ReadAll(response.Body)
+    if err != nil {
+        return pokemon.PokemonResponse{},err
+    }
+
+	var responseObject pokemon.PokemonResponse
+
+	json.Unmarshal(responseData, &responseObject)
+
+	return responseObject,nil
+}

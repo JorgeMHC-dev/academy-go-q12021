@@ -1,0 +1,20 @@
+{{define "body"}}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+       <style>
+           .container{
+               text-align: center
+           }
+       </style>
+    </head>
+    <body>
+        <div class="container">
+        <h1>Pokemon Info</h1>
+        <p>Name: {{.Name}}</p>
+        <p>No: {{.ID}}</p>
+        <img src={{.Sprites.Other.Official.Front}} />
+        </div>
+    </body>
+</html>
+{{end}}
